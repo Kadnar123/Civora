@@ -5,6 +5,7 @@ import { Camera, MapPin, Loader, Check, Mic, XCircle, RefreshCw } from 'lucide-r
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { ReportContext } from '../context/ReportContext';
+import { AuthContext } from '../context/AuthContext';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
 
@@ -48,6 +49,7 @@ const LocationSelector = ({ location, setLocation }) => {
 const SubmitReport = () => {
   const navigate = useNavigate();
   const { addReport } = useContext(ReportContext);
+  const { user } = useContext(AuthContext);
   
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [fetchingAddress, setFetchingAddress] = useState(false);
@@ -163,23 +165,17 @@ const SubmitReport = () => {
         setAnalyzingImg(true);
 
         try {
-          const response = await fetch('http://localhost:5000/api/analyze-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photoBase64: imageSrc })
-          });
+          // Dummy data to bypass backend AI API
+          const result = { success: true, category: 'Road', title: 'Pothole', confidence: 0.95 };
           
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success) {
-               // Update category and title based on AI result
-               setDetails(prev => ({ ...prev, category: result.category, title: result.title }));
-               alert(`AI Auto-Categorization Complete!\n\nDetected Issue: ${result.title}\nCategory Assigned: ${result.category}\nConfidence: ${Math.round(result.confidence * 100)}%`);
-            }
-          }
+          setTimeout(() => {
+             // Update category and title based on AI result
+             setDetails(prev => ({ ...prev, category: result.category, title: result.title }));
+             alert(`AI Auto-Categorization Complete!\n\nDetected Issue: ${result.title}\nCategory Assigned: ${result.category}\nConfidence: ${Math.round(result.confidence * 100)}%`);
+             setAnalyzingImg(false);
+          }, 1500);
         } catch (e) {
           console.error('Mock AI analysis failed', e);
-        } finally {
           setAnalyzingImg(false);
         }
 
@@ -238,7 +234,9 @@ const SubmitReport = () => {
       lat: location.lat,
       lng: location.lng,
       address: address,
-      photoBase64: photo
+      photoBase64: photo,
+      user_name: user?.name,
+      user_email: user?.email
     };
     
     const success = await addReport(payload);

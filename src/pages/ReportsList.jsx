@@ -27,7 +27,7 @@ const ReportsList = () => {
   const processedReports = useMemo(() => {
     // 0. Base filtering by Role Profile
     let result = reports.filter(r => {
-      if (user?.role === 'Master Admin') return true;
+      if (user?.role === 'Master Admin' || user?.role === 'Government') return true;
       return r.approval_level === user?.role;
     });
 
@@ -252,6 +252,7 @@ const ReportsList = () => {
                    style={{ cursor: 'pointer' }}
                  />
               </th>
+              <th>Image</th>
               <th>ID</th>
               <th>Report Details</th>
               <th>Category</th>
@@ -274,7 +275,18 @@ const ReportsList = () => {
                     style={{ cursor: 'pointer' }}
                   />
                 </td>
-                <td style={{ color: 'var(--text-muted)' }}>{report.report_id}</td>
+                <td>
+                  {(report.photo_base64 || report.photoBase64 || report.image) ? (
+                    <img 
+                      src={report.photo_base64 || report.photoBase64 || report.image} 
+                      alt="Thumbnail" 
+                      style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '50px', height: '50px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)' }}></div>
+                  )}
+                </td>
+                <td style={{ color: 'var(--text-muted)' }}>{report.report_id || report.id}</td>
                 <td>
                   <div style={{ fontWeight: '500' }}>{report.title}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Priority: <span style={{ color: report.priority === 'High' ? 'var(--accent-danger)' : 'inherit' }}>{report.priority}</span></div>

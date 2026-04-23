@@ -1,16 +1,18 @@
 import React, { useContext } from 'react';
 import { ReportContext } from '../context/ReportContext';
+import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, Clock, MapPin, Loader } from 'lucide-react';
 
 const MyReports = () => {
   const { reports, loading } = useContext(ReportContext);
+  const { user } = useContext(AuthContext);
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '100px' }}><Loader className="spin" size={32} /></div>;
   }
 
-  // Use the reports from MySQL
-  const userReports = reports;
+  // Filter reports by current user
+  const userReports = reports.filter(r => r.user_email === user?.email || r.user_name === user?.name);
 
   return (
     <div className="citizen-page">
@@ -46,8 +48,8 @@ const MyReports = () => {
             </div>
             
             <div className="tracking-body" style={{ display: 'flex', gap: '24px', marginTop: '24px' }}>
-              {report.photo_base64 ? (
-                <img src={report.photo_base64} alt="Report" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+              {(report.photo_base64 || report.photoBase64 || report.image) ? (
+                <img src={report.photo_base64 || report.photoBase64 || report.image} alt="Report" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
               ) : (
                 <div style={{ width: '120px', height: '120px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)' }}></div>
               )}

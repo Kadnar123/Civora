@@ -55,15 +55,15 @@ const ReportDetailPanel = ({ report, isOpen, onClose }) => {
       <div className={`slide-panel-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
       <div className={`slide-panel ${isOpen ? 'open' : ''}`}>
         <div className="panel-header">
-          <h3 className="page-title" style={{ marginBottom: 0, fontSize: '1.25rem' }}>{report.report_id}</h3>
+          <h3 className="page-title" style={{ marginBottom: 0, fontSize: '1.25rem' }}>{report.report_id || report.id}</h3>
           <button className="icon-btn" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
         
         <div className="panel-content">
-          {report.photo_base64 && (
-            <img src={report.photo_base64} alt={report.title} className="report-image" />
+          {(report.photo_base64 || report.photoBase64 || report.image) && (
+            <img src={report.photo_base64 || report.photoBase64 || report.image} alt={report.title} className="report-image" />
           )}
           
           <div className="info-group">
