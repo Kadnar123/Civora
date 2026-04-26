@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('civora_user', JSON.stringify(data.user));
       localStorage.setItem('civora_token', data.token);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (err) {
       console.error('Login error:', err);
       return { success: false, error: 'Login failed' };

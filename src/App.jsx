@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthContext } from './context/AuthContext';
 
 // Admin Interface
 import Layout from './components/Layout';
@@ -15,6 +16,16 @@ import MyReports from './pages/MyReports';
 import PublicLogin from './pages/PublicLogin';
 import AdminLogin from './pages/AdminLogin';
 
+const ADMIN_ROLES = ['Master Admin', 'Local Sarpanch', 'Talathi', 'Tahsildar', 'Block Development Officer', 'Sub-Divisional Magistrate', 'District Collector'];
+
+const AdminGuard = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  if (!user || !ADMIN_ROLES.includes(user.role)) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <Routes>
@@ -29,7 +40,7 @@ function App() {
       <Route path="/admin/login" element={<AdminLogin />} />
 
       {/* Admin Secure Routes */}
-      <Route path="/admin" element={<Layout />}>
+      <Route path="/admin" element={<AdminGuard><Layout /></AdminGuard>}>
         <Route index element={<AnalyticsDashboard />} />
         <Route path="map" element={<LiveMap />} />
         <Route path="reports" element={<ReportsList />} />
