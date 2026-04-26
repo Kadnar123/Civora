@@ -4,23 +4,29 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
-  const { loginAPI } = useContext(AuthContext);
+  const { loginAPI, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState('Local Sarpanch');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const ADMIN_ROLES = ['Master Admin', 'Local Sarpanch', 'Talathi', 'Tahsildar', 'Block Development Officer', 'Sub-Divisional Magistrate', 'District Collector'];
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       const res = await loginAPI(email, password);
       if (res.success) {
-        navigate('/admin');
+        if (ADMIN_ROLES.includes(res.user.role)) {
+          navigate('/admin');
+        } else {
+          logout();
+          setError('Access denied. This portal is for government officials only.');
+        }
       } else {
         setError(res.error || 'Login failed');
       }

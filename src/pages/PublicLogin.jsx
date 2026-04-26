@@ -23,17 +23,19 @@ const PublicLogin = () => {
     e.preventDefault();
     setError('');
 
+    const ADMIN_ROLES = ['Master Admin', 'Local Sarpanch', 'Talathi', 'Tahsildar', 'Block Development Officer', 'Sub-Divisional Magistrate', 'District Collector'];
+
     if (isLogin) {
       const res = await loginAPI(formData.email || formData.phone, formData.password);
       if (res.success) {
-        navigate('/my-reports');
+        navigate(ADMIN_ROLES.includes(res.user?.role) ? '/admin' : '/my-reports');
       } else {
         setError(res.error || 'Login failed');
       }
     } else {
       const res = await registerAPI(formData.name, formData.phone, formData.email, formData.password, 'Citizen');
       if (res.success) {
-        navigate('/my-reports');
+        navigate(ADMIN_ROLES.includes(res.user?.role) ? '/admin' : '/my-reports');
       } else {
         setError(res.error || 'Registration failed');
       }
