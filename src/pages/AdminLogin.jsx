@@ -4,14 +4,32 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
-  const { login } = useContext(AuthContext);
+  const { loginAPI } = useContext(AuthContext);
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState('Local Sarpanch');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    login(selectedRole);
-    navigate('/admin'); // Force routing to internal dash
+    setError('');
+    setLoading(true);
+    
+    try {
+      const res = await loginAPI(email, password);
+      if (res.success) {
+        navigate('/admin');
+      } else {
+        setError(res.error || 'Login failed');
+      }
+    } catch (err) {
+      setError('Connection error. Make sure the backend server is running.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -23,40 +41,44 @@ const AdminLogin = () => {
         </div>
         
         <h1 className="page-title" style={{ fontSize: '1.5rem', marginBottom: '8px' }}>Admin Portal Login</h1>
-        <p className="page-subtitle" style={{ marginBottom: '32px' }}>Secure simulator for Government Employees</p>
+        <p className="page-subtitle" style={{ marginBottom: '32px' }}>Access Government Dashboard</p>
+
+        {error && <div style={{ color: 'var(--accent-danger)', marginBottom: '16px', fontSize: '0.875rem', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>{error}</div>}
 
         <form onSubmit={handleLogin}>
+          <div style={{ textAlign: 'left', marginBottom: '16px' }}>
+            <label style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Email</label>
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%', paddingLeft: '12px', fontSize: '1rem', height: '48px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-light)', borderRadius: '8px' }}
+              placeholder="admin@example.com"
+              required
+            />
+          </div>
+
           <div style={{ textAlign: 'left', marginBottom: '24px' }}>
-            <label style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Select Your Department</label>
-            <div style={{ position: 'relative' }}>
-              <Key size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <select 
-                className="select-input" 
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                style={{ width: '100%', paddingLeft: '48px', fontSize: '1rem', height: '48px' }}
-              >
-                <optgroup label="Government Hierarchy">
-                  <option value="Local Sarpanch">Local Sarpanch (Village Level)</option>
-                  <option value="Talathi">Talathi (Revenue Officer)</option>
-                  <option value="Tahsildar">Tahsildar (Tehsil Level)</option>
-                  <option value="Block Development Officer">Block Development Officer</option>
-                  <option value="Sub-Divisional Magistrate">Sub-Divisional Magistrate</option>
-                  <option value="District Collector">District Collector</option>
-                </optgroup>
-                <optgroup label="System Executive">
-                  <option value="Master Admin">Master City Administrator (Sees All)</option>
-                </optgroup>
-              </select>
-            </div>
+            <label style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Password</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', paddingLeft: '12px', fontSize: '1rem', height: '48px', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-light)', borderRadius: '8px' }}
+              placeholder="Enter password"
+              required
+            />
           </div>
           
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', height: '48px', display: 'flex', justifyContent: 'center' }}>
-            <LogIn size={18} /> Login to Sandbox
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', height: '48px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} disabled={loading}>
+            {loading ? 'Logging in...' : <><LogIn size={18} /> Login</>}
           </button>
         </form>
 
         <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border-light)' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Demo Credentials:</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Email: admin@civora.local</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Password: admin123</p>
           <button onClick={() => navigate('/')} className="btn btn-outline" style={{ width: '100%' }}>
             Return to Public Site
           </button>

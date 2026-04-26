@@ -4,7 +4,7 @@ import { Filter, SortAsc, Loader, Search } from 'lucide-react';
 import { ReportContext } from '../context/ReportContext';
 import { AuthContext } from '../context/AuthContext';
 
-const ReportsList = () => {
+const ReportsList = ({ showAll = false }) => {
   const { reports, loading, bulkUpdateReports } = useContext(ReportContext);
   const { user } = useContext(AuthContext);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -25,8 +25,9 @@ const ReportsList = () => {
   const priorityScore = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
   const processedReports = useMemo(() => {
-    // 0. Base filtering by Role Profile
+    // 0. Base filtering by Role Profile (allow override via showAll)
     let result = reports.filter(r => {
+      if (showAll) return true;
       if (user?.role === 'Master Admin' || user?.role === 'Government') return true;
       return r.approval_level === user?.role;
     });

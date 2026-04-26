@@ -30,4 +30,20 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react')) return 'vendor-react';
+          if (id.includes('node_modules/react-router')) return 'vendor-router';
+          if (id.includes('node_modules/leaflet')) return 'vendor-map';
+          if (id.includes('node_modules/recharts')) return 'vendor-charts';
+          if (id.includes('node_modules/@tensorflow')) return 'vendor-ai';
+          if (id.includes('node_modules/i18next')) return 'vendor-i18n';
+          if (id.includes('node_modules')) return 'vendor';
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 })

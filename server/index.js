@@ -35,6 +35,7 @@ const pool = mysql.createPool({
 // Initialize database tables if missing
 const initDB = async () => {
   try {
+    // Create users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,18 +47,73 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log("✓ Users table ready");
+
+    // Create reports table with correct schema
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        report_id VARCHAR(20) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        description TEXT,
+        status ENUM('Pending','In Progress','Resolved') DEFAULT 'Pending',
+        approval_level ENUM('Local Sarpanch', 'Talathi', 'Tahsildar', 'Block Development Officer', 'Sub-Divisional Magistrate', 'District Collector') DEFAULT 'Local Sarpanch',
+        eta_date DATETIME NULL,
+        priority ENUM('Low','Medium','High') DEFAULT 'Medium',
+        lat DECIMAL(10,8) NOT NULL,
+        lng DECIMAL(11,8) NOT NULL,
+        address VARCHAR(500) DEFAULT NULL,
+        department VARCHAR(100) NOT NULL,
+        photo_base64 LONGTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+    console.log("✓ Reports table ready");
+
+    // Create history table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        report_id INT NOT NULL,
+        status_text VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
+      )
+    `);
+    console.log("✓ History table ready");
     
-    // Auto-add column 'user_id' to reports if missing
+    // Ensure user_id column exists in reports
     try {
       await pool.query("ALTER TABLE reports ADD COLUMN user_id INT NULL");
     } catch (e) {}
     
-    // Change column for approval_level to allow new roles
+    // Ensure approval_level enum is up to date
     try {
       await pool.query("ALTER TABLE reports MODIFY COLUMN approval_level ENUM('Local Sarpanch', 'Talathi', 'Tahsildar', 'Block Development Officer', 'Sub-Divisional Magistrate', 'District Collector') DEFAULT 'Local Sarpanch'");
     } catch (e) {}
+    
+    // Create demo admin user if not exists
+    try {
+      const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", ['admin@civora.local']);
+      if (existing.length === 0) {
+        const demoHash = await bcrypt.hash('admin123', 10);
+        await pool.query(
+          "INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?)",
+          ['Admin User', 'admin@civora.local', '9999999999', demoHash, 'Master Admin']
+        );
+        console.log("✓ Demo admin user created (email: admin@civora.local, password: admin123)");
+      }
+    } catch (e) {
+      console.warn("Demo user creation skipped:", e.message);
+    }
+    
+    console.log("✓ Database initialization complete");
   } catch (err) {
-    console.error("DB Init Error:", err);
+    console.error("✗ DB Init Error:", err.message);
   }
 };
 initDB();
@@ -199,11 +255,27 @@ app.post('/api/reports', async (req, res) => {
 app.get('/api/reports', async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT r.*, 
-        (SELECT JSON_ARRAYAGG(JSON_OBJECT('created_at', h.created_at, 'text', h.status_text)) 
-         FROM history h WHERE h.report_id = r.id ORDER BY h.created_at ASC) as history
-      FROM reports r ORDER BY r.created_at DESC
+      SELECT r.* FROM reports r ORDER BY r.created_at DESC
     `);
+
+    // Add history for each report
+    for (let report of rows) {
+      try {
+        const [historyRows] = await pool.query(`
+          SELECT created_at, status_text as text FROM history
+          WHERE report_id = ? ORDER BY created_at ASC
+        `, [report.id]);
+
+        report.history = historyRows.map(h => ({
+          created_at: h.created_at,
+          text: h.text
+        }));
+      } catch (historyErr) {
+        console.warn(`Failed to fetch history for report ${report.id}:`, historyErr.message);
+        report.history = [];
+      }
+    }
+
     res.status(200).json(rows);
   } catch (err) {
     console.error("Fetch Error:", err);

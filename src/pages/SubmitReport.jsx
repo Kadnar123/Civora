@@ -55,6 +55,7 @@ const SubmitReport = () => {
   const [fetchingAddress, setFetchingAddress] = useState(false);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
   
   // Camera State (using react-webcam)
   const webcamRef = useRef(null);
@@ -128,13 +129,19 @@ const SubmitReport = () => {
 
   // Turn on device camera
   const startCamera = () => {
+    setCameraError(null);
     setIsCameraActive(true);
     setPhoto(null);
   };
 
   // Capture frame from react-webcam with AI Verification
   const capturePhoto = useCallback(async () => {
-    if (webcamRef.current) {
+    if (!webcamRef.current) {
+      alert("Camera not ready. Please try again.");
+      return;
+    }
+
+    try {
       const videoElement = webcamRef.current.video;
       
       // Run AI Scan
@@ -183,8 +190,12 @@ const SubmitReport = () => {
         if (!location) fetchLiveLocation();
       } else {
         setAnalyzingImg(false);
-        alert("Camera is still loading. Please wait a second and try again.");
+        alert("Failed to capture photo. Camera might not be ready or permissions not granted.");
       }
+    } catch (error) {
+      console.error("Capture error:", error);
+      setAnalyzingImg(false);
+      alert("Error capturing photo: " + error.message);
     }
   }, [webcamRef, location, model]);
 
@@ -266,6 +277,12 @@ const SubmitReport = () => {
         <div className="info-group" style={{ marginBottom: '32px' }}>
           <span className="info-label" style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>1. Evidence (Camera)</span>
           
+          {cameraError && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-danger)', padding: '12px', borderRadius: 'var(--radius-sm)', marginTop: '12px', color: 'var(--accent-danger)', fontSize: '0.875rem' }}>
+              <strong>Camera Error:</strong> {cameraError}
+            </div>
+          )}
+          
           <div style={{ position: 'relative', marginTop: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
             
             {/* Webcam Stream Container */}
@@ -275,8 +292,20 @@ const SubmitReport = () => {
                   audio={false}
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode }}
+                  videoConstraints={{
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                  }}
+                  mirrored={facingMode === "user"}
                   style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }}
+                  onUserMediaError={(error) => {
+                    const errorMsg = "Camera permission denied or camera not available. Please check your browser permissions and try again.";
+                    console.error("Camera error:", error);
+                    setCameraError(errorMsg);
+                    setIsCameraActive(false);
+                  }}
+                  onUserMedia={() => setCameraError(null)}
                 />
                 
                 {aiWarning && (

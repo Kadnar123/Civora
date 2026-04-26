@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from 'react';
 
 export const AuthContext = createContext();
 
+const API_BASE = 'http://localhost:5000';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('civora_user');
@@ -9,71 +11,46 @@ export const AuthProvider = ({ children }) => {
   });
   const [token, setToken] = useState(() => localStorage.getItem('civora_token'));
 
-  const getMockUsers = () => {
-    const data = localStorage.getItem('civora_mock_users');
-    if (data) {
-      try { return JSON.parse(data); } catch(e) {}
-    }
-    return [
-      { email: 'admin@civora.com', password: 'admin123', role: 'Government', name: 'Master Admin' }
-    ];
-  };
-
   const loginAPI = async (identifier, password) => {
-    const users = getMockUsers();
-    
-    // Strict hardcoded check for government access
-    if (identifier === 'admin@civora.com') {
-      if (password === 'admin123') {
-        const userData = { role: 'Government', name: 'Master Admin', email: identifier };
-        setUser(userData);
-        setToken('mock-token-123');
-        localStorage.setItem('civora_user', JSON.stringify(userData));
-        localStorage.setItem('civora_token', 'mock-token-123');
-        return { success: true };
-      }
-      return { success: false, error: 'Invalid Government credentials' };
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) return { success: false, error: data.error || 'Login failed' };
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem('civora_user', JSON.stringify(data.user));
+      localStorage.setItem('civora_token', data.token);
+      return { success: true };
+    } catch (err) {
+      console.error('Login error:', err);
+      return { success: false, error: 'Login failed' };
     }
-
-    // Citizen authentication
-    const foundUser = users.find(u => u.email === identifier);
-    if (!foundUser) {
-      return { success: false, error: 'User not found. Please register first.' };
-    }
-
-    if (foundUser.password !== password) {
-      return { success: false, error: 'Incorrect password.' };
-    }
-
-    setUser(foundUser);
-    setToken('mock-token-123');
-    localStorage.setItem('civora_user', JSON.stringify(foundUser));
-    localStorage.setItem('civora_token', 'mock-token-123');
-    return { success: true };
   };
 
   const registerAPI = async (name, phone, email, password, role = 'Citizen') => {
-    if (email === 'admin@civora.com') {
-      return { success: false, error: 'Cannot register with restricted government email.' };
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email, password, role })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) return { success: false, error: data.error || 'Register failed' };
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem('civora_user', JSON.stringify(data.user));
+      localStorage.setItem('civora_token', data.token);
+      return { success: true };
+    } catch (err) {
+      console.error('Register error:', err);
+      return { success: false, error: 'Registration failed' };
     }
-
-    const users = getMockUsers();
-    if (users.find(u => u.email === email)) {
-      return { success: false, error: 'Email already registered.' };
-    }
-
-    const newUser = { role, name, phone, email, password };
-    users.push(newUser);
-    localStorage.setItem('civora_mock_users', JSON.stringify(users));
-
-    setUser(newUser);
-    setToken('mock-token-123');
-    localStorage.setItem('civora_user', JSON.stringify(newUser));
-    localStorage.setItem('civora_token', 'mock-token-123');
-    return { success: true };
   };
 
-  // Mock login for backward compatibility until all pages updated
   const login = (role) => {
     const userData = { role, name: role + ' User' };
     setUser(userData);
