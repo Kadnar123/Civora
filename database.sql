@@ -41,7 +41,7 @@ CREATE TABLE `reports` (
   `lng` decimal(11,8) NOT NULL,
   `address` varchar(500) DEFAULT NULL,
   `department` varchar(100) NOT NULL,
-  `photo_base64` LONGTEXT,
+
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -161,21 +161,25 @@ const SubmitReport = () => {
         setIsCameraActive(false);
         setAiWarning("");
         
-        // We set analyzing to true here so the UI shows 'Analyzing AI...' while fetching from our mock endpoint
+        // We set analyzing to true here so the UI shows 'Analyzing AI...' while fetching from our endpoint
         setAnalyzingImg(true);
 
         try {
-          // Dummy data to bypass backend AI API
-          const result = { success: true, category: 'Road', title: 'Pothole', confidence: 0.95 };
+          const response = await fetch('http://localhost:5000/api/analyze-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoBase64: imageSrc })
+          });
+          const result = await response.json();
           
-          setTimeout(() => {
+          if (result.success) {
              // Update category and title based on AI result
              setDetails(prev => ({ ...prev, category: result.category, title: result.title }));
              alert(`AI Auto-Categorization Complete!\n\nDetected Issue: ${result.title}\nCategory Assigned: ${result.category}\nConfidence: ${Math.round(result.confidence * 100)}%`);
-             setAnalyzingImg(false);
-          }, 1500);
+          }
+          setAnalyzingImg(false);
         } catch (e) {
-          console.error('Mock AI analysis failed', e);
+          console.error('AI analysis failed', e);
           setAnalyzingImg(false);
         }
 
@@ -216,10 +220,7 @@ const SubmitReport = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!photo) {
-      alert("Please capture a photo first!");
-      return;
-    }
+    // Photo is no longer required
     if (!location) {
       alert("Please provide a location by auto-detecting or dropping a pin on the map.");
       return;
@@ -234,9 +235,7 @@ const SubmitReport = () => {
       lat: location.lat,
       lng: location.lng,
       address: address,
-      photoBase64: photo,
-      user_name: user?.name,
-      user_email: user?.email
+      user_id: user?.id
     };
     
     const success = await addReport(payload);

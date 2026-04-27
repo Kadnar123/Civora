@@ -1,18 +1,22 @@
 {
-  "name": "server",
+  "name": "civora-server",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Civora Backend API Server",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",
-    "mysql2": "^3.20.0"
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.20.0",
+    "socket.io": "^4.8.3"
   }
 }

@@ -4,10 +4,8 @@ import { LayoutDashboard, Map, FileText, Settings, ShieldAlert } from 'lucide-re
 
 const Sidebar = () => {
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Live Map', path: '/map', icon: <Map size={20} /> },
-    { name: 'Reports', path: '/reports', icon: <FileText size={20} /> },
-    { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
+    { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
+    { name: 'Reports', path: '/admin/reports', icon: <FileText size={20} /> },
   ];
 
   return (

@@ -4,65 +4,83 @@ import { mockReports } from '../data/mockData';
 export const ReportContext = createContext();
 
 export const ReportProvider = ({ children }) => {
-  const [reports, setReports] = useState(() => {
-    const saved = localStorage.getItem('civora_reports');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch(e) {
-        return mockReports;
-      }
-    }
-    return mockReports;
-  });
+  const API_URL = 'http://localhost:5000';
+
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('civora_reports', JSON.stringify(reports));
-  }, [reports]);
-
   const fetchReports = async () => {
-    setLoading(false);
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/reports`);
+      const data = await response.json();
+      setReports(data);
+    } catch (err) {
+      console.error("Failed to fetch reports:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
   const addReport = async (payload) => {
-    const newReport = {
-      id: `REP-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...payload,
-      date: new Date().toISOString().split('T')[0],
-      history: [{ date: new Date().toLocaleString(), text: "Report submitted." }]
-    };
-    setReports(prev => [newReport, ...prev]);
-    return true;
+    try {
+      const response = await fetch(`${API_URL}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchReports(); // Refresh the list
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to add report:", err);
+      return false;
+    }
   };
 
   const updateReportStatus = async (id, payload) => {
-    setReports(prev => prev.map(r => {
-      if (r.id === id) {
-        return {
-          ...r,
-          status: payload.status,
-          history: [...(r.history || []), { date: new Date().toLocaleString(), text: `Status updated to ${payload.status}` }]
-        };
+    try {
+      const response = await fetch(`${API_URL}/api/reports/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchReports(); // Refresh the list
+        return true;
       }
-      return r;
-    }));
-    return true;
+      return false;
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      return false;
+    }
   };
 
   const bulkUpdateReports = async (reportIds, payload) => {
-    setReports(prev => prev.map(r => {
-      if (reportIds.includes(r.id)) {
-        return {
-          ...r,
-          status: payload.status || r.status,
-          department: payload.department || r.department,
-          history: [...(r.history || []), { date: new Date().toLocaleString(), text: `Bulk updated. Status: ${payload.status}, Dept: ${payload.department}` }]
-        };
+    try {
+      const response = await fetch(`${API_URL}/api/reports/bulk`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportIds, ...payload })
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchReports(); // Refresh the list
+        return true;
       }
-      return r;
-    }));
-    return true;
+      return false;
+    } catch (err) {
+      console.error("Failed bulk update:", err);
+      return false;
+    }
   };
 
   return (

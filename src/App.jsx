@@ -4,7 +4,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 // Admin Interface
 import Layout from './components/Layout';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import LiveMap from './pages/LiveMap';
 import ReportsList from './pages/ReportsList';
 
 // Citizen Interface
@@ -31,9 +30,7 @@ function App() {
       {/* Admin Secure Routes */}
       <Route path="/admin" element={<Layout />}>
         <Route index element={<AnalyticsDashboard />} />
-        <Route path="map" element={<LiveMap />} />
         <Route path="reports" element={<ReportsList />} />
-        <Route path="settings" element={<div className="page-header"><h1 className="page-title">Settings</h1><p style={{color: 'var(--text-muted)'}}>System configuration options will appear here.</p></div>} />
       </Route>
       
       {/* Fallback */}

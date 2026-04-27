@@ -19,58 +19,52 @@ export const AuthProvider = ({ children }) => {
     ];
   };
 
+  const API_URL = 'http://localhost:5000';
+
   const loginAPI = async (identifier, password) => {
-    const users = getMockUsers();
-    
-    // Strict hardcoded check for government access
-    if (identifier === 'admin@civora.com') {
-      if (password === 'admin123') {
-        const userData = { role: 'Government', name: 'Master Admin', email: identifier };
-        setUser(userData);
-        setToken('mock-token-123');
-        localStorage.setItem('civora_user', JSON.stringify(userData));
-        localStorage.setItem('civora_token', 'mock-token-123');
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('civora_user', JSON.stringify(data.user));
+        localStorage.setItem('civora_token', data.token);
         return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Login failed' };
       }
-      return { success: false, error: 'Invalid Government credentials' };
+    } catch (err) {
+      return { success: false, error: 'Network error. Please ensure backend is running.' };
     }
-
-    // Citizen authentication
-    const foundUser = users.find(u => u.email === identifier);
-    if (!foundUser) {
-      return { success: false, error: 'User not found. Please register first.' };
-    }
-
-    if (foundUser.password !== password) {
-      return { success: false, error: 'Incorrect password.' };
-    }
-
-    setUser(foundUser);
-    setToken('mock-token-123');
-    localStorage.setItem('civora_user', JSON.stringify(foundUser));
-    localStorage.setItem('civora_token', 'mock-token-123');
-    return { success: true };
   };
 
   const registerAPI = async (name, phone, email, password, role = 'Citizen') => {
-    if (email === 'admin@civora.com') {
-      return { success: false, error: 'Cannot register with restricted government email.' };
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email, password, role })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('civora_user', JSON.stringify(data.user));
+        localStorage.setItem('civora_token', data.token);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Registration failed' };
+      }
+    } catch (err) {
+      return { success: false, error: 'Network error. Please ensure backend is running.' };
     }
-
-    const users = getMockUsers();
-    if (users.find(u => u.email === email)) {
-      return { success: false, error: 'Email already registered.' };
-    }
-
-    const newUser = { role, name, phone, email, password };
-    users.push(newUser);
-    localStorage.setItem('civora_mock_users', JSON.stringify(users));
-
-    setUser(newUser);
-    setToken('mock-token-123');
-    localStorage.setItem('civora_user', JSON.stringify(newUser));
-    localStorage.setItem('civora_token', 'mock-token-123');
-    return { success: true };
   };
 
   // Mock login for backward compatibility until all pages updated

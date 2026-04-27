@@ -21,13 +21,14 @@ const ReportsList = () => {
   const [filterDepartment, setFilterDepartment] = useState('All');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [sortBy, setSortBy] = useState('Recent'); // Recent, Oldest, HighPriority
+  const [viewMode, setViewMode] = useState('assigned'); // 'assigned' or 'all'
 
   const priorityScore = { 'High': 3, 'Medium': 2, 'Low': 1 };
 
   const processedReports = useMemo(() => {
     // 0. Base filtering by Role Profile
     let result = reports.filter(r => {
-      if (user?.role === 'Master Admin' || user?.role === 'Government') return true;
+      if (user?.role === 'Master Admin' || user?.role === 'Government' || viewMode === 'all') return true;
       return r.approval_level === user?.role;
     });
 
@@ -137,7 +138,27 @@ const ReportsList = () => {
       <div className="filter-bar" style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-panel)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }}>
         
         {/* Top Row: Search and Sort */}
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+          
+          <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', padding: '4px', border: '1px solid var(--border-light)' }}>
+             <button 
+                type="button"
+                className={`btn ${viewMode === 'assigned' ? 'btn-primary' : 'btn-ghost'}`} 
+                onClick={() => setViewMode('assigned')}
+                style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)' }}
+             >
+               Assigned to Me
+             </button>
+             <button 
+                type="button"
+                className={`btn ${viewMode === 'all' ? 'btn-primary' : 'btn-ghost'}`} 
+                onClick={() => setViewMode('all')}
+                style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)' }}
+             >
+               See All Reports
+             </button>
+          </div>
+
           <div style={{ flex: 1, position: 'relative', minWidth: '250px' }}>
             <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 

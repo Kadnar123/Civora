@@ -12,7 +12,7 @@ const MyReports = () => {
   }
 
   // Filter reports by current user
-  const userReports = reports.filter(r => r.user_email === user?.email || r.user_name === user?.name);
+  const userReports = reports.filter(r => r.user_id === user?.id);
 
   return (
     <div className="citizen-page">
